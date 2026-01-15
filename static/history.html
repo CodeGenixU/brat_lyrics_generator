@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Brat History</title>
+    <style>
+      :root {
+        --brat-green: #8ace00;
+      }
+      body {
+        font-family: "Arial", sans-serif;
+        background-color: var(--brat-green);
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px;
+      }
+      .container {
+        background: white;
+        padding: 2rem;
+        border-radius: 0;
+        box-shadow: 10px 10px 0px black;
+        width: 800px;
+        text-align: center;
+        border: 2px solid black;
+      }
+      h1 {
+        font-family: "Arial Narrow", Arial, sans-serif;
+        font-style: italic;
+        letter-spacing: -2px;
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        margin-top: 0;
+        filter: blur(0.5px);
+      }
+      a {
+        color: black;
+        font-weight: bold;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th,
+      td {
+        border: 1px solid black;
+        padding: 10px;
+        text-align: left;
+      }
+      th {
+        background: black;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>generation history</h1>
+      <p><a href="/">← Back to Generator</a></p>
+      <div id="loading">Loading...</div>
+      <table id="historyTable" style="display: none">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Artist</th>
+            <th>Song</th>
+            <th>Download</th>
+          </tr>
+        </thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+    </div>
+
+    <script>
+      fetch("/history")
+        .then((r) => r.json())
+        .then((data) => {
+          const tbody = document.getElementById("historyBody");
+          if (data.length === 0) {
+            document.getElementById("loading").innerText = "No history found.";
+            return;
+          }
+          data.forEach((row) => {
+            const tr = document.createElement("tr");
+            const date = new Date(row.created_at).toLocaleString();
+            tr.innerHTML = `
+                        <td>${date}</td>
+                        <td>${row.artist}</td>
+                        <td>${row.song}</td>
+                        <td><a href="/generated/${row.filename}" download>Download</a></td>
+                    `;
+            tbody.appendChild(tr);
+          });
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("historyTable").style.display = "table";
+        })
+        .catch((e) => {
+          document.getElementById("loading").innerText =
+            "Error loading history: " + e;
+        });
+    </script>
+  </body>
+</html>

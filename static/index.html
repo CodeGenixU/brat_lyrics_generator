@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Brat Generator</title>
+    <style>
+      :root {
+        --brat-green: #8ace00;
+      }
+      body {
+        font-family: "Arial", sans-serif;
+        background-color: var(--brat-green);
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px;
+      }
+      .container {
+        background: white;
+        padding: 2rem;
+        border-radius: 0;
+        box-shadow: 10px 10px 0px black;
+        width: 900px;
+        text-align: center;
+        border: 2px solid black;
+      }
+      h1 {
+        font-family: "Arial Narrow", Arial, sans-serif;
+        font-style: italic;
+        letter-spacing: -2px;
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        margin-top: 0;
+        filter: blur(0.5px);
+      }
+      input,
+      button {
+        width: 100%;
+        padding: 10px;
+        margin: 5px 0;
+        border: 1px solid black;
+        box-sizing: border-box;
+        font-family: monospace;
+      }
+      button {
+        background: black;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 15px;
+      }
+      button:hover {
+        opacity: 0.8;
+      }
+      .row {
+        display: flex;
+        gap: 10px;
+      }
+      #result {
+        margin-top: 20px;
+      }
+      video {
+        width: 100%;
+        border: 2px solid black;
+      }
+      .spinner {
+        display: none;
+        margin: 20px auto;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #000;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Search Results Styles */
+      .results-container {
+        display: flex;
+        gap: 20px;
+        margin-top: 20px;
+        text-align: left;
+      }
+      .column {
+        flex: 1;
+        border: 1px solid #ccc;
+        padding: 10px;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+      .column h3 {
+        margin-top: 0;
+        border-bottom: 1px solid black;
+        padding-bottom: 5px;
+      }
+      .item {
+        border: 1px solid #eee;
+        padding: 10px;
+        margin-bottom: 5px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .item:hover {
+        background-color: #f0f0f0;
+      }
+      .item.selected {
+        background-color: var(--brat-green);
+        border: 1px solid black;
+        font-weight: bold;
+      }
+      .item img {
+        width: 60px;
+        height: 45px;
+        object-fit: cover;
+        border: 1px solid black;
+      }
+      .item-info {
+        flex: 1;
+        font-size: 0.9em;
+      }
+      .badge {
+        background: black;
+        color: white;
+        padding: 2px 5px;
+        font-size: 0.7em;
+        border-radius: 3px;
+      }
+
+      /* Expanded results for lyrics lines */
+      .lyrics-lines-container {
+        flex: 1;
+        border: 1px solid #ccc;
+        padding: 10px;
+        max-height: 400px;
+        overflow-y: auto;
+        display: none; /* Hidden until a track is selected */
+        background: #f9f9f9;
+        text-align: left;
+      }
+      .lyric-line {
+        padding: 5px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        font-family: monospace;
+      }
+      .lyric-line:hover {
+        background-color: #e0e0e0;
+      }
+      .lyric-line.selected {
+        background-color: #8ace00; /* brat green */
+        font-weight: bold;
+      }
+      .tabs {
+        display: flex;
+        border-bottom: 1px solid black;
+        margin-bottom: 10px;
+      }
+      .tab {
+        flex: 1;
+        padding: 5px;
+        cursor: pointer;
+        background: #eee;
+        border: 1px solid transparent;
+      }
+      .tab.active {
+        background: white;
+        border: 1px solid black;
+        border-bottom: 1px solid white;
+        margin-bottom: -1px;
+        font-weight: bold;
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+      textarea {
+        width: 100%;
+        height: 200px;
+        font-family: monospace;
+        resize: vertical;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        "
+      >
+        <h1>brat generator</h1>
+        <a href="/history_page" style="font-family: monospace; color: black"
+          >[HISTORY]</a
+        >
+      </div>
+
+      <!-- Search Section -->
+      <div class="row">
+        <input
+          type="text"
+          id="query"
+          placeholder="Enter Song and Artist (e.g. Apple - Charli xcx)"
+          style="flex: 3"
+        />
+        <button onclick="search()" style="flex: 1; margin: 5px 0"
+          >SEARCH</button
+        >
+      </div>
+
+      <div class="results-container" id="resultsArea" style="display: none">
+        <div class="column" style="flex: 1">
+          <h3>1. Select Audio</h3>
+          <div id="videoResults">Loading...</div>
+        </div>
+        <div class="column" style="flex: 1">
+          <h3>2. Select Lyrics</h3>
+
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab('search')">Search</div>
+            <div class="tab" onclick="switchTab('manual')">Manual Paste</div>
+          </div>
+
+          <div id="tab-search" class="tab-content active">
+            <div id="lyricsResults">Loading...</div>
+          </div>
+
+          <div id="tab-manual" class="tab-content">
+            <p style="font-size: 0.8em; margin: 0">Paste LRC content below:</p>
+            <textarea
+              id="manualLrc"
+              placeholder="[00:12.00] Line 1..."
+            ></textarea>
+            <button onclick="parseManual()">Use Manual Lyrics</button>
+          </div>
+        </div>
+        <div class="lyrics-lines-container" id="lyricsLinesArea">
+          <h3>3. Select Lines (Click start & end)</h3>
+          <div id="lyricsLines">Select a track first...</div>
+        </div>
+      </div>
+
+      <hr style="margin: 20px 0; border: 1px dashed black" />
+
+      <!-- Controls Section -->
+      <div style="opacity: 0.5; pointer-events: none" id="controlsArea">
+        <div class="row">
+          <input type="text" id="start_time" placeholder="Start (1:00)" />
+          <input type="text" id="end_time" placeholder="End (1:15)" />
+        </div>
+
+        <div class="row">
+          <input
+            type="number"
+            id="lofi"
+            placeholder="Lo-Fi (1-10)"
+            value="5"
+            min="1"
+            max="20"
+          />
+          <input
+            type="number"
+            id="fontsize"
+            placeholder="Font Size"
+            value="400"
+          />
+        </div>
+
+        <div class="row">
+          <label
+            for="bgcolor"
+            style="font-family: monospace; align-self: center"
+            >BG:</label
+          >
+          <input
+            type="color"
+            id="bgcolor"
+            value="#FFFFFF"
+            style="padding: 0; height: 40px"
+          />
+        </div>
+
+        <button onclick="generate()" id="genBtn">GENERATE VIDEO</button>
+      </div>
+
+      <div class="spinner" id="spinner"></div>
+      <div id="result"></div>
+    </div>
+
+    <script>
+      let selectedVideo = null;
+      let selectedLyricsTrack = null;
+      let parsedLyrics = []; // Array of {time: seconds, text: string}
+      let selectedLinesIndices = []; // [start_index, end_index]
+      let isManualMode = false;
+      let manualLrcContent = "";
+
+      function switchTab(mode) {
+        if (mode === "search") {
+          document
+            .querySelector(".tab[onclick=\"switchTab('search')\"]")
+            .classList.add("active");
+          document
+            .querySelector(".tab[onclick=\"switchTab('manual')\"]")
+            .classList.remove("active");
+          document.getElementById("tab-search").classList.add("active");
+          document.getElementById("tab-manual").classList.remove("active");
+          isManualMode = false;
+        } else {
+          document
+            .querySelector(".tab[onclick=\"switchTab('search')\"]")
+            .classList.remove("active");
+          document
+            .querySelector(".tab[onclick=\"switchTab('manual')\"]")
+            .classList.add("active");
+          document.getElementById("tab-search").classList.remove("active");
+          document.getElementById("tab-manual").classList.add("active");
+          isManualMode = true;
+        }
+      }
+
+      function parseManual() {
+        const content = document.getElementById("manualLrc").value;
+        if (!content) return alert("Please paste LRC content");
+        manualLrcContent = content;
+        selectedLyricsTrack = {
+          name: "Manual Input",
+          artist: "Unknown",
+          id: null,
+        }; // Dummy selection
+        parseAndShowLines(content);
+        updateControlsState();
+      }
+
+      async function search() {
+        const query = document.getElementById("query").value;
+        if (!query) return alert("Please enter a song name");
+
+        document.getElementById("resultsArea").style.display = "flex";
+        document.getElementById("lyricsLinesArea").style.display = "none";
+        document.getElementById("videoResults").innerHTML =
+          "<div class='spinner' style='display:block'></div>";
+        document.getElementById("lyricsResults").innerHTML =
+          "<div class='spinner' style='display:block'></div>";
+
+        switchTab("search");
+
+        selectedVideo = null;
+        selectedLyricsTrack = null;
+        parsedLyrics = [];
+        selectedLinesIndices = [];
+        isManualMode = false;
+        manualLrcContent = "";
+        updateControlsState();
+
+        // Parallel fetch
+        Promise.all([
+          fetch(`/search/video?q=${encodeURIComponent(query)}`).then((r) =>
+            r.json()
+          ),
+          fetch(`/search/lyrics?q=${encodeURIComponent(query)}`).then((r) =>
+            r.json()
+          ),
+        ])
+          .then(([videos, lyrics]) => {
+            renderVideos(videos);
+            renderLyricsAndSetup(lyrics);
+          })
+          .catch((e) => {
+            alert("Error searching: " + e);
+          });
+      }
+
+      function renderVideos(videos) {
+        const container = document.getElementById("videoResults");
+        container.innerHTML = "";
+        videos.forEach((v) => {
+          const div = document.createElement("div");
+          div.className = "item";
+          div.onclick = () => selectVideo(v, div);
+          div.innerHTML = `
+                <img src="${v.thumbnail}" />
+                <div class="item-info">
+                    <div>${v.title}</div>
+                    <div style="font-size:0.8em; color:#555;">${
+                      v.uploader
+                    } • ${formatDuration(v.duration)}</div>
+                </div>
+            `;
+          container.appendChild(div);
+        });
+      }
+
+      function renderLyricsAndSetup(lyrics) {
+        const container = document.getElementById("lyricsResults");
+        container.innerHTML = "";
+        if (lyrics.length === 0) {
+          container.innerHTML = "No synced lyrics found.";
+          return;
+        }
+        lyrics.forEach((l) => {
+          const div = document.createElement("div");
+          div.className = "item";
+          div.onclick = () => selectLyricsTrack(l, div);
+          div.innerHTML = `
+                <div class="item-info">
+                    <div><strong>${l.name}</strong></div>
+                    <div>${l.artist}</div>
+                    <div style="font-size:0.8em; color:#555;">${
+                      l.album || "No Album"
+                    }</div>
+                </div>
+            `;
+          container.appendChild(div);
+        });
+      }
+
+      function selectVideo(data, element) {
+        selectedVideo = data;
+        document
+          .querySelectorAll("#videoResults .item")
+          .forEach((el) => el.classList.remove("selected"));
+        element.classList.add("selected");
+        updateControlsState();
+      }
+
+      function selectLyricsTrack(data, element) {
+        selectedLyricsTrack = data;
+        document
+          .querySelectorAll("#lyricsResults .item")
+          .forEach((el) => el.classList.remove("selected"));
+        element.classList.add("selected");
+        isManualMode = false;
+
+        // Parse and show lines
+        parseAndShowLines(data.syncedLyrics);
+
+        updateControlsState();
+      }
+
+      function parseAndShowLines(lrcString) {
+        parsedLyrics = [];
+        const lines = lrcString.split("\n");
+        const regex = /\[(\d+):(\d+\.?\d*)\](.*)/;
+
+        lines.forEach((line) => {
+          const match = line.match(regex);
+          if (match) {
+            const minutes = float(match[1]);
+            const seconds = float(match[2]);
+            const text = match[3].trim();
+            parsedLyrics.push({
+              time: minutes * 60 + seconds,
+              text: text,
+            });
+          }
+        });
+
+        const container = document.getElementById("lyricsLines");
+        container.innerHTML = "";
+        document.getElementById("lyricsLinesArea").style.display = "block";
+
+        parsedLyrics.forEach((line, index) => {
+          const div = document.createElement("div");
+          div.className = "lyric-line";
+          div.innerText = line.text || "♫";
+          div.onclick = () => toggleLineSelection(index);
+          div.dataset.index = index;
+          container.appendChild(div);
+        });
+
+        // Reset selection
+        selectedLinesIndices = [];
+      }
+
+      function float(val) {
+        return parseFloat(val);
+      }
+
+      function toggleLineSelection(index) {
+        if (selectedLinesIndices.length === 0) {
+          selectedLinesIndices = [index];
+        } else if (selectedLinesIndices.length === 1) {
+          const start = selectedLinesIndices[0];
+          const end = index;
+          selectedLinesIndices = [Math.min(start, end), Math.max(start, end)];
+        } else {
+          // Reset if already 2 selected
+          selectedLinesIndices = [index];
+        }
+
+        renderLineSelection();
+        calculateTimes();
+      }
+
+      function renderLineSelection() {
+        const lines = document.querySelectorAll(".lyric-line");
+        lines.forEach((line, idx) => {
+          line.classList.remove("selected");
+          if (selectedLinesIndices.length === 1) {
+            if (idx === selectedLinesIndices[0]) line.classList.add("selected");
+          } else if (selectedLinesIndices.length === 2) {
+            if (
+              idx >= selectedLinesIndices[0] &&
+              idx <= selectedLinesIndices[1]
+            ) {
+              line.classList.add("selected");
+            }
+          }
+        });
+      }
+
+      function calculateTimes() {
+        if (selectedLinesIndices.length === 0) return;
+
+        const startIdx = selectedLinesIndices[0];
+        // Ideally end time is the start of the NEXT line after selection
+        // If it's the last line, add ~3 seconds arbitrary
+        let endIdx =
+          selectedLinesIndices.length === 2
+            ? selectedLinesIndices[1]
+            : startIdx;
+
+        const startTime = parsedLyrics[startIdx].time;
+
+        let endTime;
+        if (endIdx + 1 < parsedLyrics.length) {
+          endTime = parsedLyrics[endIdx + 1].time;
+        } else {
+          endTime = parsedLyrics[endIdx].time + 5.0; // Fallback duration
+        }
+
+        document.getElementById("start_time").value = formatTime(startTime);
+        document.getElementById("end_time").value = formatTime(endTime);
+      }
+
+      function formatTime(seconds) {
+        const m = Math.floor(seconds / 60);
+        const s = Math.floor(seconds % 60);
+        // Returns m:ss format for the input fields
+        return `${m}:${s.toString().padStart(2, "0")}`;
+      }
+
+      function updateControlsState() {
+        if (selectedVideo && selectedLyricsTrack) {
+          document.getElementById("controlsArea").style.opacity = "1";
+          document.getElementById("controlsArea").style.pointerEvents = "auto";
+        }
+      }
+
+      function formatDuration(seconds) {
+        if (!seconds) return "";
+        const m = Math.floor(seconds / 60);
+        const s = Math.floor(seconds % 60);
+        return `${m}:${s.toString().padStart(2, "0")}`;
+      }
+
+      async function generate() {
+        if (!selectedVideo || !selectedLyricsTrack) {
+          return alert("Please select both a video and lyrics");
+        }
+
+        const btn = document.getElementById("genBtn");
+        const spinner = document.getElementById("spinner");
+        const resultDiv = document.getElementById("result");
+
+        btn.disabled = true;
+        spinner.style.display = "block";
+        resultDiv.innerHTML = "";
+
+        const payload = {
+          song: selectedLyricsTrack.name || "Manual Song",
+          artist: selectedLyricsTrack.artist || "Manual Artist",
+          video_id: selectedVideo.id,
+          lyrics_id: selectedLyricsTrack.id,
+          manual_lrc: isManualMode ? manualLrcContent : null,
+          start_time: document.getElementById("start_time").value,
+          end_time: document.getElementById("end_time").value,
+          lofi: parseInt(document.getElementById("lofi").value),
+          fontsize: parseInt(document.getElementById("fontsize").value),
+          bgcolor: document.getElementById("bgcolor").value,
+        };
+
+        try {
+          const response = await fetch("/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            resultDiv.innerHTML = `
+                    <video controls autoplay>
+                        <source src="${data.video_url}" type="video/mp4">
+                        Your browser does not support video tag.
+                    </video>
+                    <p style="font-family:monospace; font-size:10px;"><a href="${data.video_url}" download>Download Video</a></p>
+                `;
+          } else {
+            resultDiv.innerHTML = `<p style="color:red">Error: ${data.detail}</p>`;
+          }
+        } catch (e) {
+          resultDiv.innerHTML = `<p style="color:red">Error: ${e.message}</p>`;
+        } finally {
+          btn.disabled = false;
+          spinner.style.display = "none";
+        }
+      }
+    </script>
+  </body>
+</html>
