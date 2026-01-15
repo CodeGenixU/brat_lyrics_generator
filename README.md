@@ -62,14 +62,20 @@ A Python-based tool that generates "brat" aesthetic lyric videos with a Lo-Fi pi
 
 ### Search & Selection Interface
 ![Search Interface](https://github.com/user-attachments/assets/4dea8139-32b8-4f11-8186-e20aaee310c5)
+
 *Search for songs and select specific versions.*
 
 ### Line Selection
 ![Line Selection](https://github.com/user-attachments/assets/ffadb03a-9f89-40f0-b6c0-8d249a45415d)
+
 *Interactive line selector for perfect timing.*
 
 ### Generated Output Example
-![Generated Video](https://github.com/user-attachments/assets/c1c5e5e7-a3e2-4207-b2d9-34afe3a38464)
+
+
+https://github.com/user-attachments/assets/7b92d28a-1607-4100-b2f9-1b48e01c992d
+
+
 *Example of the final lo-fi lyric video.*
 
 ## Project Structure
