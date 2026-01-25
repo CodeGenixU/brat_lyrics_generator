@@ -344,6 +344,8 @@ if __name__ == "__main__":
                         help="Path to the output video file")
     parser.add_argument("--bgcolor", default="#FFFFFF",
                         help="Hex code for background color")
+    parser.add_argument("--textcolor", default="#000000",
+                        help="Hex code for background color")
     parser.add_argument("--fontsize", type=int, default=400,
                         help="Maximum font size (starting size)")
     parser.add_argument("--lofi", type=int, default=1,
@@ -352,4 +354,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     generate_video(args.audio, args.output, lyrics_path=args.lyrics,
-                   bg_color_hex=args.bgcolor, max_font_size=args.fontsize, lofi_factor=args.lofi)
+                   bg_color_hex=args.bgcolor, text_color_hex=args.textcolor, max_font_size=args.fontsize, lofi_factor=args.lofi)
