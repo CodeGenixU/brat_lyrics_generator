@@ -69,10 +69,12 @@ def main():
     # Audio Download Execution
     if args.audio_output and sliced_lyrics:
         try:
-            from audio_fetcher import download_audio, trim_audio, cleanup_file
+            from audio_fetcher import first_audio, download_audio_by_url, trim_audio, cleanup_file
 
             query = f"{args.artist} - {args.song} audio"
-            temp_audio = download_audio(query)
+            temp_id = first_audio(query)
+            video_url = f"https://www.youtube.com/watch?v={temp_id}"
+            temp_audio = download_audio_by_url(video_url)
 
             if temp_audio:
                 success = trim_audio(

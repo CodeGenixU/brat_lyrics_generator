@@ -4,42 +4,6 @@ from moviepy.audio.io.AudioFileClip import AudioFileClip
 import imageio_ffmpeg
 
 
-def download_audio(query, temp_filename="full_audio"):
-    """
-    Downloads audio from YouTube using yt-dlp search.
-    Returns the path to the downloaded file.
-    """
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'noplaylist': True,
-        'quiet': True,
-        'outtmpl': temp_filename,  # Ensures consistent filename
-        'ffmpeg_location': imageio_ffmpeg.get_ffmpeg_exe(),
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }],
-    }
-
-    print(f"Searching and downloading audio for: '{query}'...")
-
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        try:
-            # We search for 1 video
-            ydl.download([f"ytsearch1:{query}"])
-            # The output will be temp_filename.mp3 because of postprocessor
-            expected_output = f"{temp_filename}.mp3"
-            if os.path.exists(expected_output):
-                return expected_output
-            else:
-                print("Error: Downloaded file not found.")
-                return None
-        except Exception as e:
-            print(f"Error downloading audio: {e}")
-            return None
-
-
 def search_videos(query, limit=5):
     """
     Searches for videos on YouTube and returns metadata.
@@ -106,6 +70,13 @@ def download_audio_by_url(url, temp_filename="full_audio"):
             print(f"Error downloading audio: {e}")
             return None
 
+def first_audio(query):
+    """
+    Downloads audio from YouTube using yt-dlp search.
+    Returns the path to the downloaded file.
+    """
+    result = search_videos(query, limit=1)
+    return result[0]['id']
 
 def trim_audio(input_path, output_path, start_time, end_time):
     """
