@@ -1,6 +1,6 @@
 from lyrics_fetcher import search_lyrics, get_lyrics_by_id, parse_lrc
 from main import generate_video
-from audio_fetcher import download_audio, trim_audio, cleanup_file, search_videos, download_audio_by_url
+from audio_fetcher import trim_audio, cleanup_file, search_videos, download_audio_by_url
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -128,10 +128,10 @@ init_db()
 app.mount("/generated", StaticFiles(directory=OUTPUT_DIR), name="generated")
 app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
 
-# Mount static files (using resource path)
-static_path = get_resource_path("static")
-if os.path.exists(static_path):
-    app.mount("/static", StaticFiles(directory=static_path), name="static")
+# # Mount static files (using resource path)
+# static_path = get_resource_path("static")
+# if os.path.exists(static_path):
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 class GenerateRequest(BaseModel):
@@ -290,24 +290,25 @@ def process_video_generation(req: GenerateRequest):
             req.video_id = first_audio(query)
 
         exists = False
-        try :
-              conn = sqlite3.connect(DB_NAME)
-              c = conn.cursor()
-              c.execute("SELECT EXISTS(SELECT 1 FROM history WHERE audio = ?)", (req.video_id,))
-              exists = bool(c.fetchone()[0])
-              conn.close()
+        try:
+            conn = sqlite3.connect(DB_NAME)
+            c = conn.cursor()
+            c.execute(
+                "SELECT EXISTS(SELECT 1 FROM history WHERE audio = ?)", (req.video_id,))
+            exists = bool(c.fetchone()[0])
+            conn.close()
         except Exception as e:
-              print(f"DB Error: {e}")
-              raise e
+            print(f"DB Error: {e}")
+            raise e
 
         temp_audio_path = os.path.join(MEDIA_DIR, req.video_id)  # type: ignore
         if not exists:
             video_url = f"https://www.youtube.com/watch?v={req.video_id}"
             temp_audio = download_audio_by_url(
-                video_url, temp_filename = temp_audio_path)
-        else :
+                video_url, temp_filename=temp_audio_path)
+        else:
             temp_audio = f"{temp_audio_path}.mp3"
-        
+
         if not temp_audio:
             raise Exception("Audio download failed")
 
@@ -331,7 +332,6 @@ def process_video_generation(req: GenerateRequest):
             text_color_hex=req.textcolor,
             max_font_size=req.fontsize,
             lofi_factor=req.lofi,
-            text_color_hex=req.textcolor
         )
     except Exception as e:
         print(f"Video Gen Error: {e}")
@@ -350,7 +350,7 @@ def process_video_generation(req: GenerateRequest):
 
     cleanup_file(output_audio)
     cleanup_file(output_json)
-    
+
     return f"/generated/{base_name}.mp4"
 
 
